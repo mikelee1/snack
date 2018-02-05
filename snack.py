@@ -15,13 +15,13 @@ class envstate:
 
 
 
-    def __init__(self,s,treapos):
+    def __init__(self,treapos,s):
 
         # 初始化pygame
         pygame.init()
         self.fpsClock = pygame.time.Clock()
         # 创建pygame显示层
-        self.playSurface = pygame.display.set_mode((640,480))
+        self.playSurface = pygame.display.set_mode((120,100))
         pygame.display.set_caption('Raspberry Snake')
 
         # 初始化变量
@@ -33,10 +33,10 @@ class envstate:
         self.changeDirection = self.direction
         self.terminal = False
 
-    def reset(self,s,trea):
-        self.__init__(s,trea)
+    def reset(self,trea,s):
+        self.__init__(trea,s)
 
-    def step(self,s,action):
+    def step(self,action,s=[20,20]):
         self.snakePosition=s[:]
         self.reward = 0
         # 检测例如按键等pygame事件
@@ -81,13 +81,16 @@ class envstate:
         # 判断是否吃掉了树莓
         if self.snakePosition[0] == self.raspberryPosition[0] and self.snakePosition[1] == self.raspberryPosition[1]:
             self.raspberrySpawned = 0
-        else:
-            self.snakeSegments.pop()
+
+        self.snakeSegments.pop()
         # 如果吃掉树莓，则重新生成树莓
         if self.raspberrySpawned == 0:
-            self.reward = 1
-            self.x = random.randrange(1,32)
-            self.y = random.randrange(1,24)
+            new1 = self.snakePosition[0]/20
+            new2 = self.snakePosition[1]/20
+            self.reward = 100
+            self.x = random.randrange(0,6)
+            self.y = random.randrange(0,5)
+
             self.raspberryPosition = [int(self.x*20),int(self.y*20)]
             self.raspberrySpawned = 1
         # 绘制pygame显示层
@@ -97,19 +100,24 @@ class envstate:
             pygame.draw.rect(self.playSurface,redColour,Rect(self.raspberryPosition[0], self.raspberryPosition[1],20,20))
 
         # 刷新pygame显示层
-        pygame.display.flip()
+
         # 判断是否死亡
-        if self.snakePosition[0] > 620 or self.snakePosition[0] < 0:
-            self.reward = -1
+        if self.snakePosition[0] > 100 or self.snakePosition[0] < 0:
+            self.reward = -100
             self.terminal = True
-        if self.snakePosition[1] > 460 or self.snakePosition[1] < 0:
+            self.reset([60,60],[40,40])
+        if self.snakePosition[1] > 80 or self.snakePosition[1] < 0:
             # for snakeBody in self.snakeSegments[1:]:
             #     if self.snakePosition[0] == snakeBody[0] and self.snakePosition[1] == snakeBody[1]:
             self.terminal = True
-            self.reward=-1
+            self.reward=-100
+            self.reset([60,60],[40,40])
+
         # 控制游戏速度
-        self.fpsClock.tick(5)
-        return self.reward,self.snakePosition,self.terminal
+        self.fpsClock.tick(50)
+        image_data = pygame.surfarray.array3d(pygame.display.get_surface())
+        pygame.display.flip()
+        return image_data,self.reward,self.terminal,self.snakePosition
 
 
     def refresh(self):

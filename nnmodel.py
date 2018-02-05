@@ -12,9 +12,20 @@ class model:
         self.y = tf.placeholder(shape=[None, 4], dtype=np.float32)
 
         self.w1 = tf.Variable(tf.ones(shape=[4, 4]), dtype=np.float32)
-        self.logits = tf.nn.relu(tf.matmul(self.x, self.w1))
-        self.loss = tf.reduce_mean(-tf.reduce_sum(self.y * tf.log(self.logits)))
-        self.optimizer = tf.train.GradientDescentOptimizer(1).minimize(self.loss)
+        self.bias1 = tf.Variable(np.random.random(), dtype=np.float32)
+        # self.logits1 = tf.nn.relu(tf.matmul(self.x, self.w1)+self.bias1)
+        # self.w2 = tf.Variable(tf.ones(shape=[10,10]), dtype=np.float32)
+        # self.bias2 = tf.Variable(np.random.random(), dtype=np.float32)
+        # self.logits2 = tf.nn.relu(tf.matmul(self.logits1, self.w2)+self.bias2)
+        # self.w3 = tf.Variable(tf.ones(shape=[10,4]), dtype=np.float32)
+        # self.bias3 = tf.Variable(np.random.random(), dtype=np.float32)
+        self.logits = tf.nn.relu(tf.matmul(self.x, self.w1)+self.bias1)
+
+
+        self.loss = tf.reduce_mean(-tf.square(self.y -self.logits))
+        #self.loss = tf.reduce_mean(-tf.reduce_sum(self.y * tf.log(self.logits)))
+        #self.loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.logits,labels=self.y)
+        self.optimizer = tf.train.AdamOptimizer(1).minimize(self.loss)
         self.initiation = tf.global_variables_initializer()
         self.saver = tf.train.Saver()
         self.timer = 0
@@ -44,13 +55,14 @@ class model:
 
         self.sess.run(self.optimizer, feed_dict={self.x: x_data, self.y: y_data})
         if self.timer % 50 == 0:
-            print('epoch: ', self.timer)
             self.saver.save(self.sess, save_path=self.ckptdir)
+            print(self.sess.run(self.loss,feed_dict={self.x:x_data,self.y:y_data}))
             # print(self.sess.run(tf.argmax(self.sess.run(self.logits, feed_dict={self.x: [[20,30,20,50]]}), 1)))
             # print(self.sess.run(tf.argmax(self.sess.run(self.logits, feed_dict={self.x: [[4, 3]]}), 1)))
 
     def evaluate(self, state):
         a = self.sess.run(self.logits, feed_dict={self.x: [state]})
+        b = self.sess.run(self.w1)
         #print(self.sess.run(self.w1))
         # print(a)
         return self.sess.run(tf.argmax(a, 1))
